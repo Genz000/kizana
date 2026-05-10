@@ -12,6 +12,7 @@ export default function KeyInput() {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [titleSize, setTitleSize] = useState(0)
   const [titleReady, setTitleReady] = useState(false)
+  const [sloganReady, setSloganReady] = useState(false)
 
   useEffect(() => {
     const fit = () => {
@@ -43,6 +44,11 @@ export default function KeyInput() {
     const ro = new ResizeObserver(fit)
     if (wrapperRef.current) ro.observe(wrapperRef.current)
     return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSloganReady(true), 100)
+    return () => clearTimeout(timer)
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -94,6 +100,8 @@ export default function KeyInput() {
           color: '#888780',
           marginTop: '4px',
           padding: 0,
+          opacity: sloganReady ? 1 : 0,
+          transition: 'opacity 0.1s ease',
         }}>
           <DecryptedText
             text="YOUR CRYPTED SECRET"
@@ -107,28 +115,19 @@ export default function KeyInput() {
           />
         </p>
       </div>
-      <div style={{ border: '1px solid #e0e0e0', display: 'flex', width: '100%' }}>
+      <div className="border border-ink/10 dark:border-paper/10 flex w-full">
         {(['safe', 'room'] as const).map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setMode(tab)}
-            style={{
-              flex: 1,
-              padding: '8px 0',
-              fontFamily: 'inherit',
-              fontSize: '11px',
-              fontWeight: 500,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              borderRadius: 0,
-              border: 'none',
-              borderBottom: mode === tab ? 'none' : '2px solid #e0e0e0',
-              background: mode === tab ? '#0a0a0a' : 'transparent',
-              color: mode === tab ? '#ffffff' : '#888888',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className={[
+              'flex-1 py-2 font-[inherit] text-[11px] font-medium tracking-[0.1em] uppercase cursor-pointer transition-all duration-150',
+              mode === tab
+                ? 'bg-ink text-paper dark:bg-paper dark:text-ink border-none'
+                : 'bg-transparent text-muted border-b border-ink/10 dark:border-paper/10',
+            ].join(' ')}
+            style={{ borderRadius: 0 }}
           >
             {tab === 'safe' ? 'Safe' : 'Room'}
           </button>
