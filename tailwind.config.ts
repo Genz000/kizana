@@ -12,6 +12,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-geist-mono)', 'monospace'],
         mono: ['var(--font-geist-mono)', 'monospace'],
+        display: ['var(--font-martian-mono)', 'monospace'],
       },
       colors: {
         brand: '#FF4A00',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { hashKey } from '@/lib/hashKey'
 import DecryptedText from './DecryptedText'
@@ -9,6 +9,41 @@ export default function KeyInput() {
   const [key, setKey] = useState('')
   const [mode, setMode] = useState<'safe' | 'room'>('safe')
   const router = useRouter()
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [titleSize, setTitleSize] = useState(0)
+  const [titleReady, setTitleReady] = useState(false)
+
+  useEffect(() => {
+    const fit = () => {
+      if (!wrapperRef.current) return
+      const available = wrapperRef.current.getBoundingClientRect().width
+      if (!available) return
+
+      const probe = document.createElement('span')
+      probe.textContent = 'KIZANA'
+      Object.assign(probe.style, {
+        position: 'fixed',
+        top: '-9999px',
+        left: '-9999px',
+        fontFamily: 'var(--font-martian-mono), monospace',
+        fontWeight: '800',
+        fontSize: '100px',
+        whiteSpace: 'nowrap',
+        visibility: 'hidden',
+      })
+      document.body.appendChild(probe)
+      const refWidth = probe.getBoundingClientRect().width
+      document.body.removeChild(probe)
+
+      if (!refWidth) return
+      setTitleSize((available / refWidth) * 100)
+      setTitleReady(true)
+    }
+    document.fonts.ready.then(fit)
+    const ro = new ResizeObserver(fit)
+    if (wrapperRef.current) ro.observe(wrapperRef.current)
+    return () => ro.disconnect()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -21,8 +56,21 @@ export default function KeyInput() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm px-4">
-      <div className="flex flex-col items-start mb-10">
-        <h1 className="text-[48px] font-medium tracking-[0.08em] uppercase leading-none">
+      <div ref={wrapperRef} style={{ width: '100%', marginBottom: '40px' }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-martian-mono), monospace',
+            fontWeight: 800,
+            fontSize: titleSize || undefined,
+            textTransform: 'uppercase',
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+            opacity: titleReady ? 1 : 0,
+            transition: 'opacity 0.2s ease',
+            margin: 0,
+            padding: 0,
+          }}
+        >
           <DecryptedText
             text="KIZANA"
             animateOn="view"
@@ -34,7 +82,19 @@ export default function KeyInput() {
             encryptedClassName="text-muted opacity-40"
           />
         </h1>
-        <p className="text-[11px] tracking-[0.16em] uppercase text-muted self-end mt-1">
+        <p style={{
+          display: 'block',
+          width: '100%',
+          textAlign: 'right',
+          fontFamily: 'var(--font-martian-mono), monospace',
+          fontWeight: 400,
+          fontSize: '7px',
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: '#888780',
+          marginTop: '4px',
+          padding: 0,
+        }}>
           <DecryptedText
             text="YOUR CRYPTED SECRET"
             animateOn="view"
