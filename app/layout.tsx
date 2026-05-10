@@ -4,7 +4,7 @@ import { ThemeProvider } from 'next-themes'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'keepsafe',
+  title: 'Kizana',
   description: 'Secure client-side vault and chat',
 }
 
