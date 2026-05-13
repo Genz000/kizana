@@ -146,6 +146,7 @@ export default function DecryptedText({
     <span
       ref={containerRef}
       className={`inline-block ${parentClassName}`}
+      style={{ fontFamily: 'inherit', fontWeight: 'inherit' }}
       onMouseEnter={() => animateOn === 'hover' && setIsHovering(true)}
       onMouseLeave={() => animateOn === 'hover' && setIsHovering(false)}
     >

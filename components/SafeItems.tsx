@@ -6,9 +6,10 @@ import { encrypt, decrypt } from '@/lib/crypto'
 
 interface Props {
   hash: string
+  derivedKey: CryptoKey | null
 }
 
-export default function SafeItems({ hash }: Props) {
+export default function SafeItems({ hash, derivedKey }: Props) {
   const [items, setItems] = useState<SafeItem[]>([])
   const [label, setLabel] = useState('')
   const [value, setValue] = useState('')

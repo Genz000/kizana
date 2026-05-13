@@ -31,7 +31,15 @@ export default function Home() {
         <ThemeToggle />
       </div>
 
-      <div style={{ position: 'relative', zIndex: 10 }}>
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+      }}>
         <KeyInput />
       </div>
     </main>

@@ -6,26 +6,21 @@ function fromBase64(str: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(str), (c) => c.charCodeAt(0))
 }
 
-export async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(password),
-    'PBKDF2',
-    false,
-    ['deriveKey'],
-  )
-  return crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: new Uint8Array(salt), // copy ensures ArrayBuffer backing for strict types
-      iterations: 200_000,
-      hash: 'SHA-256',
-    },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt'],
-  )
+export function deriveKey(password: string, salt: string): Promise<CryptoKey> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(
+      new URL('./crypto.worker.ts', import.meta.url),
+    )
+    worker.onmessage = (e: MessageEvent<{ key: CryptoKey }>) => {
+      resolve(e.data.key)
+      worker.terminate()
+    }
+    worker.onerror = (e) => {
+      reject(e)
+      worker.terminate()
+    }
+    worker.postMessage({ password, salt })
+  })
 }
 
 export async function encrypt(
