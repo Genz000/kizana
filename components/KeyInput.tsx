@@ -183,7 +183,7 @@ export default function KeyInput() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '4px',
+      gap: '0px',
     }}>
       <div style={{ width: '200px', height: '200px' }}>
         <DotLottieReact

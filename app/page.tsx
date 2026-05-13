@@ -16,7 +16,7 @@ export default function Home() {
         <div className="block dark:hidden" style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(242,241,238,0.9)',
+          background: 'rgba(242,241,238,0.8)',
           pointerEvents: 'none',
         }} />
         <div className="hidden dark:block" style={{
