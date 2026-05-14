@@ -10,7 +10,8 @@ export async function GET(
     const raw = await redis.get(`${mode}:${params.hash}`)
     if (!raw) return NextResponse.json({ exists: false, hasPin: false })
     const data = JSON.parse(raw)
-    return NextResponse.json({ exists: true, hasPin: !!data.pinHash })
+    const ttl = await redis.ttl(`${mode}:${params.hash}`)
+    return NextResponse.json({ exists: true, hasPin: !!data.pinHash, ttl })
   } catch {
     return NextResponse.json({ exists: false, hasPin: false })
   }

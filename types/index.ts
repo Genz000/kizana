@@ -1,7 +1,20 @@
+export type ItemType = 'LINK' | 'NOTE' | 'CODE' | 'PASS'
+
 export interface SafeItem {
   id: string
-  label: string
+  type: ItemType
+  title: string
   value: string
+  createdAt: number
+  isNew?: boolean
+}
+
+export interface StoredItem {
+  id: string
+  type: ItemType
+  title?: string
+  ciphertext: string
+  iv: string
   createdAt: number
 }
 
