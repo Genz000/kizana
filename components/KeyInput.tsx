@@ -222,6 +222,7 @@ export default function KeyInput() {
             transition: 'opacity 0.2s ease',
             margin: 0,
             padding: 0,
+            textIndent: '-1px',
           }}
         >
           <DecryptedText
