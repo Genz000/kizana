@@ -31,6 +31,7 @@ export default function KeyInput() {
   const [createDone, setCreateDone] = useState(false)
   const [error, setError] = useState('')
   const [visible, setVisible] = useState(true)
+  const [roomName, setRoomName] = useState('')
 
   const router = useRouter()
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -73,6 +74,14 @@ export default function KeyInput() {
     return () => clearTimeout(t)
   }, [])
 
+  useEffect(() => {
+    const savedName = sessionStorage.getItem('kizana_room_name')
+    const savedHash = sessionStorage.getItem('kizana_room_hash')
+    if (savedName && savedHash === hash) {
+      setRoomName(savedName)
+    }
+  }, [])
+
   async function fade(next: PageState, setup?: () => void) {
     setVisible(false)
     await new Promise((r) => setTimeout(r, 150))
@@ -106,6 +115,11 @@ export default function KeyInput() {
         await fade('pin-entry', () => setPin(''))
       } else {
         sessionStorage.setItem('kizana_raw_key', key)
+        if (mode === 'room') {
+          const displayName = roomName.trim() || `USER ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`
+          sessionStorage.setItem('kizana_room_name', displayName)
+          sessionStorage.setItem('kizana_room_hash', h)
+        }
         router.push(`/${mode}/${h}`)
       }
     } catch {
@@ -126,6 +140,11 @@ export default function KeyInput() {
       const data = await res.json()
       if (data.valid) {
         sessionStorage.setItem('kizana_raw_key', key)
+        if (mode === 'room') {
+          const displayName = roomName.trim() || `USER ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`
+          sessionStorage.setItem('kizana_room_name', displayName)
+          sessionStorage.setItem('kizana_room_hash', hash)
+        }
         router.push(`/${mode}/${hash}`)
       } else {
         setPageState('wrong-pin')
@@ -155,6 +174,11 @@ export default function KeyInput() {
       if (data.success) {
         setCreateDone(true)
         sessionStorage.setItem('kizana_raw_key', key)
+        if (mode === 'room') {
+          const displayName = roomName.trim() || `USER ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`
+          sessionStorage.setItem('kizana_room_name', displayName)
+          sessionStorage.setItem('kizana_room_hash', hash)
+        }
         await new Promise((r) => setTimeout(r, 300))
         router.push(`/${mode}/${hash}`)
       } else {
@@ -290,7 +314,7 @@ export default function KeyInput() {
                 </button>
               ))}
             </div>
-            <div style={{ position: 'relative', width: '100%' }}>
+            <div style={{ position: 'relative', width: '100%', marginTop: '12px' }}>
               <input
                 type={showKey ? 'text' : 'password'}
                 value={key}
@@ -322,6 +346,21 @@ export default function KeyInput() {
                 {showKey ? 'HIDE' : 'SHOW'}
               </button>
             </div>
+            {mode === 'room' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] tracking-[0.12em] uppercase text-muted">
+                  USER NAME — OPTIONAL
+                </label>
+                <input
+                  type="text"
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="TEMPORARY NAME"
+                  maxLength={20}
+                  className={inputClass}
+                />
+              </div>
+            )}
             <div style={{ marginTop: '1.25rem' }}>
               <button
                 type="submit"

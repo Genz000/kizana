@@ -40,6 +40,15 @@ All sensitive inputs are `type="password"` by default with a SHOW/HIDE text togg
 - Default state: hidden (`false`)
 - Reset to hidden on every state transition (in `fade()`)
 
+## Chat Messages
+- Sender name: `8px uppercase opacity 0.3`
+- My sender name: `color #FF4A00`
+- My bubble: `border 0.5px solid #FF4A00`, `color #FF4A00`
+- Their bubble: `border 0.5px solid rgba(255,255,255,0.15)`, `color inherit`
+- Name field on landing: only visible when ROOM tab active
+- Stored in `sessionStorage` only — no persistence beyond the session
+- Blank name defaults to `ANON`
+
 ## Never
 - No rounded corners beyond `2px`
 - No shadows, no gradients

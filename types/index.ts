@@ -20,7 +20,7 @@ export interface StoredItem {
 
 export interface ChatMessage {
   id: string
+  sender: string
   content: string
   timestamp: number
-  sender: 'local' | 'remote'
 }
