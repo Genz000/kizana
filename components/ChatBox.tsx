@@ -7,7 +7,7 @@ interface Props {
   hash: string
 }
 
-export default function ChatBox({ hash }: Props) {
+export default function ChatBox({ hash: _hash }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
