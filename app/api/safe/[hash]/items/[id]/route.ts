@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type Redis from 'ioredis'
+type RedisClient = typeof import('@/lib/redis').default
 
-async function getRedisAndItems(hash: string): Promise<{ redis: Redis; items: { id: string }[] }> {
+async function getRedisAndItems(hash: string): Promise<{ redis: RedisClient; items: { id: string }[] }> {
   const redis = (await import('@/lib/redis')).default
   const raw = await redis.get(`safe:${hash}:items`)
   return { redis, items: raw ? JSON.parse(raw) : [] }
 }
 
-async function persist(redis: Redis, hash: string, items: unknown[]) {
+async function persist(redis: RedisClient, hash: string, items: unknown[]) {
   const ttl = await redis.ttl(`safe:${hash}`)
   if (ttl > 0) {
     await redis.set(`safe:${hash}:items`, JSON.stringify(items), 'EX', ttl)
