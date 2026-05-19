@@ -47,7 +47,9 @@ const ghostBtn: React.CSSProperties = {
   opacity: 0.35,
   cursor: 'pointer',
   color: 'inherit',
-  padding: '2px 0',
+  padding: 0,
+  height: '20px',
+  lineHeight: '20px',
 }
 
 export default function SafePage({ params }: Props) {
@@ -56,11 +58,13 @@ export default function SafePage({ params }: Props) {
   const [items, setItems] = useState<SafeItem[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [copied, setCopied] = useState(false)
   const [showPass, setShowPass] = useState(false)
+  const [copyHover, setCopyHover] = useState(false)
+  const [deleteHover, setDeleteHover] = useState(false)
   const [ttl, setTtl] = useState<number | null>(null)
 
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveContentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveTitleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const itemsRef = useRef<SafeItem[]>([])
   const derivedKeyRef = useRef<CryptoKey | null>(null)
   itemsRef.current = items
@@ -71,7 +75,11 @@ export default function SafePage({ params }: Props) {
   useEffect(() => {
     const rawKey = sessionStorage.getItem('kizana_raw_key')
     if (!rawKey) return
-    deriveKey(rawKey, hash).then(setDerivedKey)
+    let cancelled = false
+    deriveKey(rawKey, hash).then((key) => {
+      if (!cancelled) setDerivedKey(key)
+    })
+    return () => { cancelled = true }
   }, [hash])
 
   useEffect(() => {
@@ -95,7 +103,11 @@ export default function SafePage({ params }: Props) {
             createdAt: s.createdAt,
           }))
         )
-        setItems(decrypted)
+        setItems((prev) => {
+          const redisIds = new Set(decrypted.map((i) => i.id))
+          const localOnly = prev.filter((i) => !redisIds.has(i.id))
+          return localOnly.length === 0 ? decrypted : [...decrypted, ...localOnly]
+        })
       })
       .catch(() => {})
   }, [derivedKey, hash])
@@ -105,24 +117,27 @@ export default function SafePage({ params }: Props) {
     setShowPass(false)
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleNewNote = useCallback(() => {
-    const newItem: SafeItem = {
-      id: crypto.randomUUID(),
-      type: 'NOTE' as ItemType,
-      title: '',
-      value: '',
-      createdAt: Date.now(),
-      isNew: true,
-    }
+  const handleNewNote = useCallback(async () => {
+    const id = crypto.randomUUID()
+    const createdAt = Date.now()
+    const newItem: SafeItem = { id, type: 'NOTE' as ItemType, title: '', value: '', createdAt, isNew: true }
     setItems((prev) => [newItem, ...prev])
-    setSelectedId(newItem.id)
+    setSelectedId(id)
     setEditValue('')
     setTimeout(() => {
-      setItems((prev) =>
-        prev.map((i) => (i.id === newItem.id ? { ...i, isNew: false } : i))
-      )
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, isNew: false } : i)))
     }, 3000)
-  }, [])
+    const key = derivedKeyRef.current
+    if (key) {
+      const { ciphertext, iv } = await encrypt('', key)
+      const stored: StoredItem = { id, type: 'NOTE', ciphertext, iv, createdAt }
+      fetch(`/api/safe/${hash}/items/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item: stored }),
+      }).catch(() => {})
+    }
+  }, [hash])
 
   const handleUpdateItem = useCallback((id: string, value: string) => {
     const detectedType = detectType(value)
@@ -130,10 +145,10 @@ export default function SafePage({ params }: Props) {
       prev.map((i) => (i.id === id ? { ...i, value, type: detectedType } : i))
     )
 
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    if (saveContentTimeoutRef.current) clearTimeout(saveContentTimeoutRef.current)
     if (!value.trim()) return
 
-    saveTimeoutRef.current = setTimeout(async () => {
+    saveContentTimeoutRef.current = setTimeout(async () => {
       const key = derivedKeyRef.current
       if (!key) return
       const item = itemsRef.current.find((i) => i.id === id)
@@ -143,6 +158,7 @@ export default function SafePage({ params }: Props) {
         const stored: StoredItem = {
           id,
           type: detectedType,
+          title: item.title,
           ciphertext,
           iv,
           createdAt: item.createdAt,
@@ -160,8 +176,8 @@ export default function SafePage({ params }: Props) {
 
   const handleUpdateTitle = useCallback((id: string, title: string) => {
     setItems((prev) => prev.map((item) => item.id === id ? { ...item, title } : item))
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-    saveTimeoutRef.current = setTimeout(() => {
+    if (saveTitleTimeoutRef.current) clearTimeout(saveTitleTimeoutRef.current)
+    saveTitleTimeoutRef.current = setTimeout(() => {
       fetch(`/api/safe/${hash}/items/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -182,12 +198,30 @@ export default function SafePage({ params }: Props) {
     [hash, selectedId]
   )
 
-  const handleCopy = useCallback(async () => {
+  const handleDuplicate = useCallback(async () => {
     if (!selectedItem) return
-    await navigator.clipboard.writeText(selectedItem.value)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }, [selectedItem])
+    const key = derivedKeyRef.current
+    if (!key) return
+    const id = crypto.randomUUID()
+    const createdAt = Date.now()
+    const duplicate: SafeItem = {
+      id,
+      type: selectedItem.type,
+      title: selectedItem.title ? `${selectedItem.title} copy` : '',
+      value: selectedItem.value,
+      createdAt,
+    }
+    setItems((prev) => [duplicate, ...prev])
+    setSelectedId(id)
+    setEditValue(duplicate.value)
+    const { ciphertext, iv } = await encrypt(duplicate.value, key)
+    const stored: StoredItem = { id, type: duplicate.type, ciphertext, iv, createdAt, title: duplicate.title }
+    fetch(`/api/safe/${hash}/items/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item: stored }),
+    }).catch(() => {})
+  }, [selectedItem, hash])
 
   return (
     <main
@@ -225,6 +259,7 @@ export default function SafePage({ params }: Props) {
         {/* FIX 1 — button + separator */}
         <button
           onClick={handleNewNote}
+          disabled={!derivedKey}
           style={{
             width: '100%',
             height: '40px',
@@ -237,15 +272,16 @@ export default function SafePage({ params }: Props) {
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: '#ffffff',
-            cursor: 'pointer',
+            cursor: derivedKey ? 'pointer' : 'wait',
             textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             flexShrink: 0,
+            opacity: derivedKey ? 1 : 0.5,
           }}
         >
-          + NEW SECRET
+          {derivedKey ? '+ NEW SECRET' : 'LOADING…'}
         </button>
         <div className="border-b border-ink/[0.08] dark:border-paper/[0.08]" style={{ flexShrink: 0 }} />
 
@@ -375,6 +411,9 @@ export default function SafePage({ params }: Props) {
                   opacity: 0.85,
                   flex: 1,
                   marginRight: '24px',
+                  height: '20px',
+                  lineHeight: '20px',
+                  padding: 0,
                 }}
               />
               <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -383,21 +422,21 @@ export default function SafePage({ params }: Props) {
                     {showPass ? 'HIDE' : 'REVEAL'}
                   </button>
                 )}
-                <button onClick={handleCopy} style={{ ...ghostBtn, opacity: copied ? 0.7 : 0.35 }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="4" y="4" width="9" height="9" stroke="currentColor" strokeWidth="1.2"/>
-                    <path d="M1 10V1h9" stroke="currentColor" strokeWidth="1.2"/>
-                  </svg>
+                <button
+                  onClick={handleDuplicate}
+                  onMouseEnter={() => setCopyHover(true)}
+                  onMouseLeave={() => setCopyHover(false)}
+                  style={{ ...ghostBtn, opacity: copyHover ? 0.8 : 0.35 }}
+                >
+                  DUPLICATE
                 </button>
                 <button
                   onClick={() => handleDelete(selectedItem.id)}
-                  style={ghostBtn}
+                  onMouseEnter={() => setDeleteHover(true)}
+                  onMouseLeave={() => setDeleteHover(false)}
+                  style={{ ...ghostBtn, opacity: deleteHover ? 1 : 0.35, color: deleteHover ? '#FF4A00' : 'inherit' }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M1 4h12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square"/>
-                    <rect x="3" y="4" width="8" height="8" stroke="currentColor" strokeWidth="1.2"/>
-                    <path d="M5 4V2h4v2" stroke="currentColor" strokeWidth="1.2"/>
-                  </svg>
+                  DELETE
                 </button>
               </div>
             </div>
