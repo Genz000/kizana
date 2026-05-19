@@ -7,7 +7,7 @@ interface Props {
   hash: string
 }
 
-export default function ChatBox({ hash: _hash }: Props) {
+export default function ChatBox({ hash }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -30,7 +30,7 @@ export default function ChatBox({ hash: _hash }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen" data-room={hash}>
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3" style={{ marginTop: '53px' }}>
         {messages.map((msg) => (
           <div
