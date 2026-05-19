@@ -14,7 +14,7 @@ export const SafeHeader = ({ mode, hash, expiry, onLogout }: SafeHeaderProps) =>
 
   return (
   <header
-    className="bg-paper dark:bg-ink"
+    className="bg-paper dark:bg-ink border-b border-ink/[0.15] dark:border-paper/[0.15]"
     style={{
       position: 'fixed',
       top: 0,
@@ -25,7 +25,6 @@ export const SafeHeader = ({ mode, hash, expiry, onLogout }: SafeHeaderProps) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '12px 24px',
-      borderBottom: '0.5px solid rgba(128,128,128,0.12)',
       fontFamily: 'var(--font-geist-mono)',
     }}
   >

@@ -246,7 +246,7 @@ export default function SafePage({ params }: Props) {
 
       {/* SIDEBAR */}
       <div
-        className="border-r border-ink/[0.06] dark:border-paper/[0.06]"
+        className="border-r border-ink/[0.15] dark:border-paper/[0.15]"
         style={{
           width: '280px',
           minWidth: '280px',
@@ -283,7 +283,7 @@ export default function SafePage({ params }: Props) {
         >
           {derivedKey ? '+ NEW SECRET' : 'LOADING…'}
         </button>
-        <div className="border-b border-ink/[0.08] dark:border-paper/[0.08]" style={{ flexShrink: 0 }} />
+        <div className="border-b border-ink/[0.15] dark:border-paper/[0.15]" style={{ flexShrink: 0 }} />
 
         {/* FIX 2 — item cards with editable title + hover delete */}
         {items.map((item) => (
@@ -292,7 +292,7 @@ export default function SafePage({ params }: Props) {
             onClick={() => setSelectedId(item.id)}
             style={{
               padding: '12px 16px',
-              borderBottom: '0.5px solid rgba(10,10,10,0.04)',
+              borderBottom: '0.5px solid rgba(10,10,10,0.15)',
               cursor: 'pointer',
               borderLeft: selectedId === item.id
                 ? '2px solid #FF4A00'
@@ -303,7 +303,7 @@ export default function SafePage({ params }: Props) {
               position: 'relative',
               overflow: 'hidden',
             }}
-            className="dark:[border-bottom-color:rgba(255,255,255,0.04)] hover:bg-ink/[0.02] dark:hover:bg-paper/[0.02]"
+            className="dark:[border-bottom-color:rgba(255,255,255,0.15)] hover:bg-ink/[0.02] dark:hover:bg-paper/[0.02]"
           >
             {/* editable title */}
             <input
@@ -381,7 +381,7 @@ export default function SafePage({ params }: Props) {
           <>
             {/* toolbar */}
             <div
-              className="border-b border-ink/[0.06] dark:border-paper/[0.06]"
+              className="border-b border-ink/[0.15] dark:border-paper/[0.15]"
               style={{
                 height: '40px',
                 boxSizing: 'border-box',
