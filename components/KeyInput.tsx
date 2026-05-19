@@ -243,7 +243,7 @@ export default function KeyInput() {
             textAlign: 'right',
             fontFamily: 'var(--font-martian-mono), monospace',
             fontWeight: 400,
-            fontSize: '9px',
+            fontSize: '12px',
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
             color: '#888780',
